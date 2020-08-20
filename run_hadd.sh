@@ -22,24 +22,30 @@ else
     exit 0
 fi
 
+# import config variables (user modifiable)
 source $HOME/.shadd/shadd.cfg
 
+# calculate the number of jobs to submit
 Ntot=($(wc -l $INPUTFILE))
 Ntot=${Ntot[0]}
 Nmax=$(($Ntot / $Nlines))
 
-name=HADD
+# generate random name for the jobs
+name=HADD_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 5 | head -n 1)
 
+# create temporary directory to store the intermediate results
 TEMPDIR=./temp_shadd_$name
 mkdir -p $TEMPDIR
 
+# logs are stored in the TEMPDIR too (by default all removed after execution)
 output=$TEMPDIR/job_%j.out                                                                                             
 error=$TEMPDIR/job_%j.err
 
-sbatch --export=ALL,OUTPUTFILE=$OUTPUTFILE,INPUTFILE=$INPUTFILE,TEMPDIR=$TEMPDIR,Nlines=$Nlines --array=0-$Nmax%$NmaxSimultaneouslyRunning --job-name=$name --output=$output --error=$error $HOME/.shadd/submit_hadd.sh
+# main sbatch command
+sbatch --export=ALL,HADD="$HADD",OUTPUTFILE=$OUTPUTFILE,INPUTFILE=$INPUTFILE,TEMPDIR=$TEMPDIR,Nlines=$Nlines --array=0-$Nmax%$NmaxSimultaneouslyRunning --job-name=$name --output=$output --error=$error $HOME/.shadd/submit_hadd.sh
 
+# check that everything is done
 alldone=false
-
 until $alldone
 do
      sleep 1
@@ -51,8 +57,10 @@ do
      fi
 done
 
-hadd -f -k $OUTPUTFILE $TEMPDIR/*.root
+# Get resulting root file
+$HADD $OUTPUTFILE $TEMPDIR/*.root
 
+# remove TEMPDIR (modify the shadd.cfg to disable it)
 if $rm_temp_dir
 then
     rm -rf $TEMPDIR
