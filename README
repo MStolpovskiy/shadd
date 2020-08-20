@@ -1,0 +1,31 @@
+shadd = super hadd!!!
+
+Use it to hadd together large number of root files (> 500)
+
+Usage: shadd -options out.root in.txt
+
+   - where -options are the same as in hadd command
+     just pay attention to write them glued together
+     like, for example, -fk to force recreate existent
+     output file and ignore corrupted files in the input
+
+   - out.root is the name of the output root file
+
+   - in.txt is the name of a text file with the list of the
+     input root files. Create one with something like
+     ls myfiles_*.root > in.txt
+
+A glimps inside: shadd submits several slurm jobs (so it can be only used
+on the systems with installed slurm, check out slurm.schedmd.com) each one
+of these jobs hadds Nlines files. By default Nlines=200, change it according
+the characteristics of your computer in shadd.cfg file (there are few other 
+settings that you might want to change as well). After finishing all these
+slurm jobs the final output root file will be created by merging together
+the temporary files. Shadd is slow (typically it takes couple minutes to
+complete), but it doesn't load your interactive shell, so other users won't
+complaint about the slowness of the system. Moreover, your hadd may crush
+if the number of the input files is more than ~1000. Shadd does not have this
+limitation.
+
+Take a look at the slurm options in submit_hadd.sh. You may want to change them
+according to your needs.
