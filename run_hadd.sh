@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Author: Mikhail Stolpovskiy, mikhail.stolpovsky@gmail.com
-#
 
 if [[ $# -eq 2 ]]
 then
@@ -23,16 +22,38 @@ else
     exit 0
 fi
 
-Nlines=200 # FIX IT!
-NmaxSimultaneouslyRunning=200 # FIX IT!
+source $HOME/.shadd/shadd.cfg
+
 Ntot=($(wc -l $INPUTFILE))
 Ntot=${Ntot[0]}
 Nmax=$(($Ntot / $Nlines))
 
-TEMPDIR=./temp_shadd
+name=HADD
+
+TEMPDIR=./temp_shadd_$name
 mkdir -p $TEMPDIR
 
 output=$TEMPDIR/job_%j.out                                                                                             
-error=$TEMPDIR/job_%j.err 
+error=$TEMPDIR/job_%j.err
 
-sbatch --export=ALL,OUTPUTFILE=$OUTPUTFILE,INPUTFILE=$INPUTFILE,TEMPDIR=$TEMPDIR,Nlines=$Nlines --array=0-$Nmax%$NmaxSimultaneouslyRunning --output=$output --error=$error $HOME/.shadd/submit_hadd.sh
+sbatch --export=ALL,OUTPUTFILE=$OUTPUTFILE,INPUTFILE=$INPUTFILE,TEMPDIR=$TEMPDIR,Nlines=$Nlines --array=0-$Nmax%$NmaxSimultaneouslyRunning --job-name=$name --output=$output --error=$error $HOME/.shadd/submit_hadd.sh
+
+alldone=false
+
+until $alldone
+do
+     sleep 1
+     nrunning=($(squeue --name $name | wc -l))
+     nrunning=${nrunning[0]}
+     if (( $nrunning == 1 ))
+     then
+	 alldone=true
+     fi
+done
+
+hadd -f -k $OUTPUTFILE $TEMPDIR/*.root
+
+if $rm_temp_dir
+then
+    rm -rf $TEMPDIR
+fi

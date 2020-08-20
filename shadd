@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Author: Mikhail Stolpovskiy, mikhail.stolpovsky@gmail.com
+
+#  ADD THE FOLLOWING LINE TO YOUR ~/.bash_profile
+#  source $HOME/.shadd/shadd
+
+alias shadd="$HOME/.shadd/run_hadd.sh $1 $2 $3"
