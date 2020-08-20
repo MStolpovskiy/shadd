@@ -29,3 +29,6 @@ limitation.
 
 Take a look at the slurm options in submit_hadd.sh. You may want to change them
 according to your needs.
+
+ADD THE FOLLOWING LINE TO YOUR ~/.bash_profile
+source $HOME/.shadd/shadd
