@@ -2,12 +2,7 @@ shadd = super hadd!!! (This is about the ROOT package)
 
 Use it to hadd together large number of root files (> 500)
 
-Usage: shadd -options out.root in.txt
-
-   - where -options are the same as in hadd command
-     just pay attention to write them glued together
-     like, for example, -fk to force recreate existent
-     output file and ignore corrupted files in the input
+Usage: shadd out.root in.txt
 
    - out.root is the name of the output root file
 
@@ -15,20 +10,22 @@ Usage: shadd -options out.root in.txt
      input root files. Create one with something like
      ls myfiles_*.root > in.txt
 
-A glimps inside: shadd submits several slurm jobs (so it can be only used
+A glimps inside: shadd submits an array of slurm jobs (so it can be only used
 on the systems with installed slurm, check out slurm.schedmd.com) each one
 of these jobs hadds Nlines files. By default Nlines=200, change it according
 the characteristics of your computer in shadd.cfg file (there are few other 
 settings that you might want to change as well). After finishing all these
 slurm jobs the final output root file will be created by merging together
-the temporary files. Shadd is slow (typically it takes couple minutes to
+the temporary files. Shadd is slow (typically it takes about a minute to
 complete), but it doesn't load your interactive shell, so other users won't
 complaint about the slowness of the system. Moreover, your hadd may crush
 if the number of the input files is more than ~1000. Shadd does not have this
-limitation.
+limitation. If the number of input files is huge (100000 and more) consider using
+shadd in non-interactive mode (see shadd.cfg) and use shadd over the output
+of the first run of shadd.
 
 Take a look at the slurm options in submit_hadd.sh. You may want to change them
 according to your needs.
 
-ADD THE FOLLOWING LINE TO YOUR ~/.bash_profile
+IN ORDER TO USE SHADD ADD THE FOLLOWING LINE TO YOUR ~/.bash_profile
 source $HOME/.shadd/shadd
