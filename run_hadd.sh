@@ -42,26 +42,52 @@ output=$TEMPDIR/job_%j.out
 error=$TEMPDIR/job_%j.err
 
 # main sbatch command
+echo "Submit job array to hadd the intermediate results..."
 sbatch --export=ALL,HADD="$HADD",OUTPUTFILE=$OUTPUTFILE,INPUTFILE=$INPUTFILE,TEMPDIR=$TEMPDIR,Nlines=$Nlines --array=0-$Nmax%$NmaxSimultaneouslyRunning --job-name=$name --output=$output --error=$error $HOME/.shadd/submit_hadd.sh
 
-# check that everything is done
-alldone=false
-until $alldone
-do
-     sleep 1
-     nrunning=($(squeue --name $name | wc -l))
-     nrunning=${nrunning[0]}
-     if (( $nrunning == 1 ))
-     then
-	 alldone=true
-     fi
-done
+# Interactive way
+progressbar() {
+ num=$1
+ ntot=$2
+ s=($(echo "print('|' + '='*($num - 1) + '>' + '.'*($ntot - $num) + '|')" | python3))
+ echo -ne "$s\r"
+}
 
-# Get resulting root file
-$HADD $OUTPUTFILE $TEMPDIR/*.root
-
-# remove TEMPDIR (modify the shadd.cfg to disable it)
-if $rm_temp_dir
+if $interactive
 then
-    rm -rf $TEMPDIR
+    echo "Please wait for all the jobs to complete"
+    # check that everything is done
+    alldone=false
+    until $alldone
+    do
+	sleep 1
+	nrunning=($(squeue --name $name | wc -l))
+	nrunning=${nrunning[0]}
+	prev_perc=-1
+	percentage=($(echo "print(int((${Nmax}-${nrunning}+1)/${Nmax}*${pbar_len}))" | python3))
+	if (( percentage > prev_perc ))
+	then
+	    prev_perc=$percentage
+	    progressbar $percentage $pbar_len
+	fi
+	if (( $nrunning == 1 ))
+	then
+	    alldone=true
+	fi
+    done
+    progressbar $pbar_len $pbar_len
+    echo -e "\nJobs are complete!"
+
+    # Get resulting root file
+    echo "Please wait until I hadd the intermediate root files"
+    $HADD $OUTPUTFILE $TEMPDIR/*.root
+
+    # remove TEMPDIR (modify the shadd.cfg to disable it)
+    echo "Cleaning up..."
+    if $rm_temp_dir
+    then
+	rm -rf $TEMPDIR
+    fi
 fi
+
+echo "Done!"
